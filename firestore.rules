@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// The Suraksha Story — live voting rules
+// Phones vote without accounts. Only the presenter (Google sign-in) can
+// control the session and read votes/players.
+// ⚠ Replace YOUR_GMAIL@gmail.com below (and in js/config.js), then publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isPresenter() {
+      return request.auth != null
+        && request.auth.token.email == 'uiparth06@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    match /sessions/{sid} {
+      // Phones read the session state (round, phase, options, leaderboard)
+      allow read: if true;
+      allow write: if isPresenter();
+
+      function sess() {
+        return get(/databases/$(database)/documents/sessions/$(sid)).data;
+      }
+
+      match /players/{pid} {
+        allow read, delete: if isPresenter();
+        allow create, update: if pid.matches('d_[a-z0-9]{8,24}')
+          && request.resource.data.keys().hasOnly(['nick', 'joinedAt'])
+          && request.resource.data.keys().hasAll(['nick', 'joinedAt'])
+          && request.resource.data.nick is string
+          && request.resource.data.nick.size() >= 2
+          && request.resource.data.nick.size() <= 20
+          && request.resource.data.joinedAt == request.time;
+      }
+
+      match /votes/{vid} {
+        allow read, delete: if isPresenter();
+        // One doc per phone per round ("<roundId>_<deviceId>"); re-voting overwrites.
+        // Accepted only while that round's voting is open.
+        allow create, update: if sess().screen == 'round'
+          && sess().phase == 'vote'
+          && request.resource.data.keys().hasOnly(['roundId', 'choice', 'deviceId', 'nick', 'ts'])
+          && request.resource.data.keys().hasAll(['roundId', 'choice', 'deviceId', 'nick', 'ts'])
+          && request.resource.data.roundId == sess().roundId
+          && request.resource.data.choice in ['A', 'B', 'C', 'D']
+          && request.resource.data.deviceId.matches('d_[a-z0-9]{8,24}')
+          && vid == request.resource.data.roundId + '_' + request.resource.data.deviceId
+          && request.resource.data.nick is string
+          && request.resource.data.nick.size() <= 20
+          && request.resource.data.ts == request.time;
+      }
+    }
+
+    // Everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

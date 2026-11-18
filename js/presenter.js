@@ -13,11 +13,11 @@
   const LSK = "suraksha-presenter-v2-" + BE.sid;
   const JOIN_URL = new URL("vote.html", location.href).href.replace(/\?.*$/, "");
 
-  let st = { s: 0, p: 0, manual: {}, openedAt: {}, elapsed: 0, running: false, live: true };
+  let st = { s: 0, p: 0, manual: {}, openedAt: {}, elapsed: 0, running: false, live: true, epoch: Date.now() };
   try { const sv = JSON.parse(localStorage.getItem(LSK) || "null"); if (sv) Object.assign(st, sv, { running: false }); } catch (e) {}
-  const save = () => { try { localStorage.setItem(LSK, JSON.stringify({ s: st.s, p: st.p, manual: st.manual, openedAt: st.openedAt, elapsed: st.elapsed, live: st.live })); } catch (e) {} };
+  const save = () => { try { localStorage.setItem(LSK, JSON.stringify({ s: st.s, p: st.p, manual: st.manual, openedAt: st.openedAt, elapsed: st.elapsed, live: st.live, epoch: st.epoch })); } catch (e) {} };
 
-  let beOk = false, allVotes = [], players = {};
+  let beOk = false, allVotes = [], players = {}, authState = null, unsubs = [], initFailed = false;
 
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -50,7 +50,8 @@
   }
 
   /* ---------- state published to phones ---------- */
-  function stateFor() {
+  function stateFor() { return Object.assign(stateCore(), { epoch: st.epoch }); }
+  function stateCore() {
     const sc = cur();
     if (sc.t === "round") {
       const r = ROUNDS[sc.i], ph = PH[st.p], phase = ph === "twistAns" ? "twist" : ph;
@@ -101,7 +102,11 @@
     const voted = rev.filter((i) => majority(ROUNDS[i].id) !== null).length;
     $("#score").textContent = `Room: ${right}/${voted}`;
     $("#joined").textContent = `📱 ${Object.keys(players).length}`;
-    $("#mode").innerHTML = isLive() ? `<span class="live">● LIVE</span>` : beOk ? `<span class="man">MANUAL</span>` : `<span class="man" title="Backend not connected">OFFLINE · MANUAL</span>`;
+    $("#mode").innerHTML = isLive() ? `<span class="live">● LIVE</span>`
+      : beOk ? `<span class="man">MANUAL</span>`
+      : authState && authState.signedIn && !authState.ok ? `<span class="signin" title="${esc(authState.email)} is not the presenter account">⚠ Wrong account · switch</span>`
+      : BE.requiresAuth && BE.ready && !initFailed ? `<span class="signin">🔐 Sign in to go live</span>`
+      : `<span class="man" title="Backend not connected">OFFLINE · MANUAL</span>`;
     const pcs = [];
     rev.forEach((i) => ROUNDS[i].pieces.forEach((p) => { if (!p.tw || st.s > ROUND0 + i || (st.s === ROUND0 + i && st.p >= 4)) pcs.push(p.n); }));
     $("#collected").innerHTML = pcs.length ? pcs.map((n) => `<span class="mini">${n}</span>`).join("") : `<span>The Suraksha Map of Work fills in as you decide…</span>`;
@@ -269,7 +274,14 @@
   $("#timer").onclick = toggleTimer;
   $("#prevBtn").onclick = prev;
   $("#nextBtn").onclick = next;
-  $("#mode").onclick = () => toggleLive();
+  $("#mode").onclick = async () => {
+    if (beOk) return toggleLive();
+    if (!BE.requiresAuth || !BE.signIn) return toast("Backend not connected — manual counting only");
+    try {
+      if (authState && authState.signedIn && !authState.ok) await BE.signOut();
+      await BE.signIn();
+    } catch (e) { toast("Sign-in failed: " + (e.code || e.message)); }
+  };
 
   function toggleLive() {
     if (!beOk) { toast("Backend not connected — manual counting only"); return; }
@@ -296,7 +308,7 @@
       }
       case "x": case "X": {
         if (Date.now() - xAt < 1500) {
-          BE.reset().then(() => { st.manual = {}; st.openedAt = {}; lastPub = ""; render(); toast("Session reset: players and votes cleared"); });
+          BE.reset().catch((er) => toast("Reset failed: " + er.message)).then(() => { st.manual = {}; st.openedAt = {}; st.epoch = Date.now(); lastPub = ""; render(); toast("Session reset: players and votes cleared"); });
           xAt = 0;
         } else { xAt = Date.now(); toast("Press X again to reset the whole session"); }
         break;
@@ -311,12 +323,24 @@
   $("#help").onclick = () => $("#help").classList.remove("on");
 
   /* ---------- boot ---------- */
-  render();
-  BE.init().then(() => {
+  function startLive() {
+    if (beOk) return;
     beOk = true;
-    BE.onVotes((list) => { allVotes = list || []; onData(); });
-    BE.onPlayers((p) => { players = p || {}; onData(); });
+    unsubs.push(BE.onVotes((list) => { allVotes = list || []; onData(); }));
+    unsubs.push(BE.onPlayers((p) => { players = p || {}; onData(); }));
     lastPub = ""; render();
-    if (BE.kind === "mock") toast("Test mode: open vote.html in other tabs to act as phones");
-  }).catch((e) => { beOk = false; toast(e.message); render(); });
+  }
+  function stopLive() {
+    unsubs.forEach((u) => { try { u(); } catch (e) {} }); unsubs = [];
+    beOk = false; render();
+  }
+  render();
+  BE.init("presenter").then(() => {
+    if (!BE.requiresAuth) { startLive(); toast("Test mode: open vote.html in other tabs to act as phones"); return; }
+    BE.onAuth((a) => {
+      authState = a;
+      if (a.ok) { startLive(); toast("Signed in as " + a.email + " — LIVE"); }
+      else { stopLive(); if (a.signedIn) toast(a.email + " is not the presenter account"); }
+    });
+  }).catch((e) => { beOk = false; initFailed = true; toast("Can't reach Firebase — manual mode. " + e.message); render(); });
 })();

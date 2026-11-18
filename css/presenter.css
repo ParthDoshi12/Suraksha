@@ -156,3 +156,4 @@ kbd{font-family:"IBM Plex Mono",monospace;background:#1c2752;border:1px solid #3
 #collected{min-width:0}
 #top{min-width:0}
 #journey{min-width:0}
+#mode .signin{color:#0a0f1e;background:var(--D);padding:5px 10px;border-radius:8px;font-weight:700}

@@ -1,0 +1,7 @@
+{
+  "name": "suraksha-tools",
+  "private": true,
+  "type": "module",
+  "scripts": { "simulate": "node simulate.mjs 150" },
+  "dependencies": { "firebase": "^10.12.2" }
+}

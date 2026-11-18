@@ -131,7 +131,19 @@
   render(true);
   window.addEventListener("offline", () => ($("#net").hidden = false));
   window.addEventListener("online", () => ($("#net").hidden = true));
-  BE.init().then(() => {
-    BE.onState((s) => { state = s; if (sending) return; errMsg = ""; render(); });
-  }).catch((e) => { $("#view").innerHTML = `<div class="center"><div class="big-emoji">🛠️</div><h2>Voting isn't live yet</h2><p>${esc(e.message)}</p></div>`; });
+  BE.init("voter").then(() => {
+    BE.onState((s) => {
+      state = s;
+      if (s && s.epoch && me.epoch !== s.epoch) {
+        const wasPlaying = !!me.epoch;
+        me.epoch = s.epoch;
+        if (wasPlaying) {               // presenter reset the session: fresh scores, rejoin quietly
+          me.votes = {}; me.correct = {}; lastKey = "";
+          if (me.joined && me.nick) BE.join(me.nick).catch(() => {});
+        }
+        save();
+      }
+      if (sending) return; errMsg = ""; render();
+    });
+  }).catch((e) => { $("#view").innerHTML = `<div class="center"><div class="big-emoji">🛠️</div><h2>Can't reach the voting server</h2><p>Check your internet (Wi-Fi or mobile data) and refresh.<br>No worries, you can still vote with the coloured cards!</p><button class="btn" onclick="location.reload()">Refresh</button></div>`; });
 })();

@@ -14,39 +14,61 @@ index.html          presenter
 vote.html           phone voting page
 css/presenter.css   presenter styles
 css/vote.css        phone styles
-js/config.js        ← switch backend here (mock | firestore)
+js/config.js        ← Firebase config, presenter Gmail, backend switch
+firestore.rules     ← security rules (paste into Firebase console)
+tools/simulate.mjs  ← rules check + load test with fake phones
 js/content.js       ← all story content: rounds, options, answers, notes (presenter only)
-js/backend.js       backend interface + mock implementation (Firestore comes next)
+js/backend.js       backend interface: Firestore (live) + mock (offline testing)
 js/presenter.js     presenter engine
 js/vote.js          phone engine
 ```
 Phones never load `content.js`. They only see what the presenter publishes, and the correct answer is sent only after the reveal.
 
-## Try it locally (test mode, no server needed)
-```bash
-cd suraksha-live
-python -m http.server 8000
-```
-1. Open `http://localhost:8000/index.html` (the presenter).
-2. Open `http://localhost:8000/vote.html` in 2–3 **other tabs in the same browser**. Each tab acts as a separate phone.
-3. Join from each tab, then step through the presenter with `→`. The phone tabs follow along.
-4. During a vote, press `S` on the presenter to add 40 simulated voters.
-5. To reset everything, press `X` twice.
+## One-time Firebase setup (project `suraksha-f8d85`)
+1. **Your Gmail:** replace `YOUR_GMAIL@gmail.com` in **both** `js/config.js` and `firestore.rules`.
+2. **Firestore:** Console → Build → Firestore Database → *Create database* → location **asia-south1 (Mumbai)** → start in **production mode**.
+3. **Rules:** Firestore → *Rules* tab → paste the full `firestore.rules` → **Publish**.
+4. **Google sign-in:** Authentication → *Get started* → Sign-in method → **Google** → Enable → pick a support email → Save.
+5. **Authorized domain:** Authentication → Settings → Authorized domains → **Add domain** → `parthdoshi12.github.io`.
 
-In test mode the tabs sync through the browser's own storage, so real phones won't connect yet. That's what the Firestore step adds.
+## Deploy (GitHub Pages)
+1. Push these files to the root of `ParthDoshi12/Suraksha` on `main`.
+2. Repo → Settings → Pages → *Deploy from a branch* → `main` / `(root)` → Save.
+3. Presenter: **https://parthdoshi12.github.io/Suraksha/**
+   Phones: **https://parthdoshi12.github.io/Suraksha/vote.html** (also the QR on the title slide)
+
+## Going live
+1. Open the presenter URL and click the yellow **🔐 Sign in to go live** badge (top right). Sign in with your Gmail.
+2. The badge turns into a green **● LIVE**. The 📱 counter climbs as people scan the QR.
+3. Before the audience joins, press **X twice** to clear rehearsal data.
+
+| Badge | Meaning |
+|---|---|
+| 🔐 Sign in to go live | Firebase reachable, you're not signed in yet |
+| ⚠ Wrong account · switch | Signed in with a Gmail that isn't the presenter account |
+| ● LIVE | Phone votes are counting |
+| MANUAL | You pressed `L`: count cards with keys 1–4 |
+| OFFLINE · MANUAL | Firebase unreachable: cards only, the story keeps going |
+
+## Rehearse & load-test
+```bash
+cd tools && npm install && node simulate.mjs 150
+```
+This joins 150 fake phones and checks that the rules **block** phones from reading votes, changing the session or voting with bad data. Then every time you open a vote on the presenter, all 150 vote within ~10 s and it prints accepted/failed counts and latency. Press **X twice** on the presenter afterwards.
+
+Also test on real phones: one on Wi-Fi, one on mobile data, one iPhone, one Android.
+
+## Test without Firebase
+Add `?backend=mock` to both pages, e.g. `index.html?backend=mock` and `vote.html?backend=mock` in other tabs of the **same browser**. Each tab acts as a phone. Press `S` during a vote for 40 simulated voters.
 
 ## Presenter keys
-`→`/`Space` next · `←` back · `L` Live ↔ Manual · `1–4` count cards (manual) · `S` simulate (test mode) · `X X` reset · `T` timer · `N` notes · `F` fullscreen · `?` help
+`→`/`Space` next · `←` back · `L` Live ↔ Manual · `1–4` count cards (manual) · `S` simulate (mock only) · `X X` reset session · `T` timer · `N` notes · `F` fullscreen · `?` help
 
-**Live vs Manual:** Live shows phone votes. If the network fails, press `L` and count the coloured cards with keys 1–4. The story never stops.
-
-## Deploy to GitHub Pages
-1. Create a new repo and push these files to `main`.
-2. Go to Settings → Pages → Deploy from branch → `main` / root.
-3. Open `https://<username>.github.io/<repo>/`. The QR on the title slide points to `vote.html` on the same site automatically.
-
-## Leaderboard rules
-1 point for each round where your phone vote matches the best fit. Ties are broken by total time to a correct answer, measured from when voting opened. Plot twists are shout-outs and aren't scored.
-
-## Next step: Firestore
-`js/backend.js` will get a `FirestoreBackend` with the same methods as the mock (`join`, `onState`, `vote`, `setState`, `onVotes`, `onPlayers`, `reset`), plus security rules and presenter sign-in with Google. No UI code changes are needed.
+## How it works
+- **Session doc** `sessions/ye2026`: what phones should show (round, phase, options, and the answer only after the reveal, plus the leaderboard at the end). Only the presenter can write it.
+- **Votes** `sessions/ye2026/votes/{round}_{device}`: one per phone per round; re-voting overwrites. Accepted only while that round is open.
+- **Players** `sessions/ye2026/players/{device}`: nickname for the leaderboard.
+- Phones have **no accounts** (no sign-in, and no per-IP sign-up limits on shared venue Wi-Fi). A random device id is kept in the phone's browser.
+- **Leaderboard:** 1 point for each round where your vote matches the best fit. Ties are broken by total time to a correct answer.
+- **Reset (X X)** clears votes and players; phones wipe their local scores and rejoin automatically.
+- **Free-tier usage** for a 150-person session is roughly 2K writes and under 10K reads, well within Firestore's free daily limits.
