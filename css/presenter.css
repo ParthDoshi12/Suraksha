@@ -137,6 +137,8 @@ kbd{font-family:"IBM Plex Mono",monospace;background:#1c2752;border:1px solid #3
 .joinurl{font-size:15px;color:var(--ink);word-break:break-all;max-width:260px}
 .joincount{margin-top:8px;color:var(--muted);font-size:14px}
 .joincount b{color:var(--accent);font-size:22px}
+.votetimer{font-size:16px;font-weight:700;color:var(--accent);margin-left:10px;padding:4px 12px;border:1px solid var(--accent);border-radius:999px;vertical-align:middle;font-variant-numeric:tabular-nums}
+.votetimer.done{color:#ff5a5a;border-color:#ff5a5a}
 .votecount{font-size:16px;font-weight:600;color:var(--muted);margin-left:12px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;vertical-align:middle}
 #toast{position:fixed;left:50%;top:76px;transform:translate(-50%,-20px);background:#18234a;border:1px solid var(--accent);color:var(--ink);padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:40}
 #toast.on{opacity:1;transform:translate(-50%,0)}

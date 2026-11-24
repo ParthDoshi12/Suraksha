@@ -173,7 +173,7 @@
         <div class="ask">${r.question}</div></div>`;
       if (ph === "vote") {
         const tot = KEYS.reduce((a, k) => a + v(r.id)[k], 0);
-        return `<div class="screen">${head}<h2>${strip(r.question)} <span class="votecount">${tot} vote${tot === 1 ? "" : "s"}</span></h2>${optsHTML(r, "vote")}
+        return `<div class="screen">${head}<h2>${strip(r.question)} <span class="votecount">${tot} vote${tot === 1 ? "" : "s"}</span><span class="votetimer" id="votetimer">${voteLeft(r)}</span></h2>${optsHTML(r, "vote")}
         <div class="hint">${isLive() ? "Voting is open on phones 📱. Cards up too! Press <kbd>→</kbd> to close voting and reveal." : "Cards up! Tap an option or press <kbd>1</kbd>–<kbd>4</kbd> to count. Press <kbd>→</kbd> to reveal."}</div></div>`;
       }
       if (ph === "reveal") {
@@ -247,6 +247,7 @@
       el.onclick = () => addVote(el.dataset.k, 1);
       el.oncontextmenu = (e) => { e.preventDefault(); addVote(el.dataset.k, -1); };
     });
+    const vt = $("#votetimer"); if (vt) { vt.style.cursor = "pointer"; vt.title = "Restart (R)"; vt.onclick = restartVote; }
     document.querySelectorAll("[data-go]").forEach((el) => (el.onclick = () => go(+el.dataset.go)));
     document.querySelectorAll("[data-unblur]").forEach((el) => (el.parentElement.onclick = () => { el.style.filter = el.style.filter ? "" : "blur(5px)"; }));
   }
@@ -264,12 +265,23 @@
   /* ---------- timer ---------- */
   let tick = null;
   const fmt = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  const VOTE_SECS = 70;
+  const voteLeft = (r) => Math.max(0, VOTE_SECS - Math.floor((Date.now() - (st.openedAt[r.id] || Date.now())) / 1000));
   function toggleTimer() {
     st.running = !st.running;
     if (st.running) tick = setInterval(() => { st.elapsed++; $("#timer").textContent = fmt(st.elapsed); if (st.elapsed % 10 === 0) save(); }, 1000);
     else clearInterval(tick);
     $("#timer").style.borderColor = st.running ? "var(--accent)" : "";
   }
+  function restartVote() {
+    const r = roundOf();
+    if (r && PH[st.p] === "vote") { st.openedAt[r.id] = Date.now(); render(true); }
+  }
+  setInterval(() => {
+    const el = $("#votetimer"), r = roundOf();
+    if (!el || !r) return;
+    const n = voteLeft(r); el.textContent = n; el.classList.toggle("done", n === 0);
+  }, 1000);
   $("#timer").textContent = fmt(st.elapsed);
   $("#timer").onclick = toggleTimer;
   $("#prevBtn").onclick = prev;
@@ -315,6 +327,7 @@
       }
       case "n": case "N": $("#notes").classList.toggle("on"); break;
       case "t": case "T": toggleTimer(); break;
+      case "r": case "R": restartVote(); break;
       case "f": case "F": try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } catch (err) {} break;
       case "?": $("#help").classList.toggle("on"); break;
       case "Escape": $("#help").classList.remove("on"); $("#notes").classList.remove("on"); break;
