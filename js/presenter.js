@@ -60,6 +60,7 @@
         question: strip(r.question), phase,
         options: KEYS.reduce((o, k) => ((o[k] = { l: r.options[k].l, s: r.options[k].s }), o), {})
       };
+      if (phase === "vote") { s.voteSecs = VOTE_SECS; s.voteEndsAt = (st.openedAt[r.id] || Date.now()) + VOTE_SECS * 1000; }
       if (phase === "reveal" || phase === "twist") { s.correct = r.correct; s.correctLabel = r.options[r.correct].l; }
       return s;
     }
@@ -265,7 +266,7 @@
   /* ---------- timer ---------- */
   let tick = null;
   const fmt = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
-  const VOTE_SECS = 70;
+  const VOTE_SECS = 45;
   const voteLeft = (r) => Math.max(0, VOTE_SECS - Math.floor((Date.now() - (st.openedAt[r.id] || Date.now())) / 1000));
   function toggleTimer() {
     st.running = !st.running;

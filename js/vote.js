@@ -53,6 +53,7 @@
     const mine = me.votes[s.roundId];
     return `<div class="kicker">Round ${s.roundIdx + 1} of ${s.total} · ${esc(s.stage)}</div>
       <h2>${esc(s.question)}</h2>
+      ${s.voteEndsAt ? `<div class="vtimer" id="vtimer"><span class="vsecs" id="vsecs">${voteLeft(s)}</span><span class="vbar"><i id="vfill"></i></span></div>` : ""}
       <div class="opts ${mine ? "has-sel" : ""}">${KEYS.map((k) => `<button class="opt ${mine === k ? "sel" : ""}" data-k="${k}">
         <span class="k" style="background:var(--${k})">${k}</span><span><span class="t">${esc(s.options[k].l)}</span><span class="s" style="display:block">${esc(s.options[k].s)}</span></span></button>`).join("")}</div>
       <div class="locked">${sending ? "Sending…" : mine ? `Locked in: <b>${mine}</b> · tap another to change` : "Tap your pick"}</div>
@@ -113,6 +114,7 @@
     };
     if (rn) rn.onclick = () => { me.joined = false; draftNick = me.nick; save(); render(true); };
     document.querySelectorAll(".opt").forEach((b) => (b.onclick = () => castVote(b.dataset.k)));
+    tickVote();
   }
 
   async function castVote(k) {
@@ -126,6 +128,20 @@
     }
     sending = false; save(); render(true);
   }
+
+  /* ---------- vote countdown (driven by presenter's voteEndsAt) ---------- */
+  function voteMs(s) { return Math.max(0, Math.min((s.voteSecs || 45) * 1000, s.voteEndsAt - Date.now())); }
+  function voteLeft(s) { return Math.ceil(voteMs(s) / 1000); }
+  function tickVote() {
+    const el = $("#vtimer"), s = state;
+    if (!el || !s || s.phase !== "vote" || !s.voteEndsAt) return;
+    const ms = voteMs(s);
+    $("#vsecs").textContent = Math.ceil(ms / 1000);
+    $("#vfill").style.width = (ms / ((s.voteSecs || 45) * 1000)) * 100 + "%";
+    el.classList.toggle("done", ms === 0);
+    el.classList.toggle("low", ms > 0 && ms <= 10000);
+  }
+  setInterval(tickVote, 250);
 
   /* ---------- boot ---------- */
   render(true);
