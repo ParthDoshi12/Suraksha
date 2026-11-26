@@ -9,6 +9,8 @@
   const SCREENS = [{ t: "title" }, { t: "org" }, { t: "lens" }, ...ROUNDS.map((r, i) => ({ t: "round", i })), { t: "map" }, { t: "leaders" }, { t: "close" }];
   const ROUND0 = 3;
   const PH = ["scene", "vote", "reveal", "twist", "twistAns"];
+  const PH_DEMO = ["scene", "vote", "reveal", "demo", "twist", "twistAns"];
+  const phs = (r) => (r && r.demo ? PH_DEMO : PH);
   const KEYS = ["A", "B", "C", "D"];
   const LSK = "suraksha-presenter-v2-" + BE.sid;
   const JOIN_URL = new URL("vote.html", location.href).href.replace(/\?.*$/, "");
@@ -25,6 +27,7 @@
   const cur = () => SCREENS[st.s];
   const roundOf = () => (cur().t === "round" ? ROUNDS[cur().i] : null);
   const isLive = () => st.live && beOk;
+  const curPH = () => phs(roundOf())[st.p];
 
   /* ---------- votes ---------- */
   function liveCounts(rid) { const c = { A: 0, B: 0, C: 0, D: 0 }; allVotes.forEach((v) => { if (v.roundId === rid && c[v.choice] !== undefined) c[v.choice]++; }); return c; }
@@ -54,7 +57,7 @@
   function stateCore() {
     const sc = cur();
     if (sc.t === "round") {
-      const r = ROUNDS[sc.i], ph = PH[st.p], phase = ph === "twistAns" ? "twist" : ph;
+      const r = ROUNDS[sc.i], ph = curPH(), phase = ph === "twistAns" ? "twist" : ph === "demo" ? "reveal" : ph;
       const s = {
         screen: "round", roundIdx: sc.i, roundId: r.id, total: ROUNDS.length, stage: r.stage, title: r.title,
         question: strip(r.question), phase,
@@ -78,8 +81,8 @@
   }
 
   /* ---------- navigation ---------- */
-  function next() { const sc = cur(); if (sc.t === "round" && st.p < PH.length - 1) st.p++; else if (st.s < SCREENS.length - 1) { st.s++; st.p = 0; } render(); }
-  function prev() { const sc = cur(); if (sc.t === "round" && st.p > 0) st.p--; else if (st.s > 0) { st.s--; st.p = SCREENS[st.s].t === "round" ? PH.length - 1 : 0; } render(); }
+  function next() { const sc = cur(); if (sc.t === "round" && st.p < phs(ROUNDS[sc.i]).length - 1) st.p++; else if (st.s < SCREENS.length - 1) { st.s++; st.p = 0; } render(); }
+  function prev() { const sc = cur(); if (sc.t === "round" && st.p > 0) st.p--; else if (st.s > 0) { st.s--; const pv = SCREENS[st.s]; st.p = pv.t === "round" ? phs(ROUNDS[pv.i]).length - 1 : 0; } render(); }
   function go(s) { st.s = s; st.p = 0; render(); }
   function addVote(k, d) {
     const r = roundOf(); if (!r) return;
@@ -109,7 +112,7 @@
       : BE.requiresAuth && BE.ready && !initFailed ? `<span class="signin">🔐 Sign in to go live</span>`
       : `<span class="man" title="Backend not connected">OFFLINE · MANUAL</span>`;
     const pcs = [];
-    rev.forEach((i) => ROUNDS[i].pieces.forEach((p) => { if (!p.tw || st.s > ROUND0 + i || (st.s === ROUND0 + i && st.p >= 4)) pcs.push(p.n); }));
+    rev.forEach((i) => ROUNDS[i].pieces.forEach((p) => { if (!p.tw || st.s > ROUND0 + i || (st.s === ROUND0 + i && st.p >= phs(ROUNDS[i]).indexOf("twistAns"))) pcs.push(p.n); }));
     $("#collected").innerHTML = pcs.length ? pcs.map((n) => `<span class="mini">${n}</span>`).join("") : `<span>The Suraksha Map of Work fills in as you decide…</span>`;
   }
 
@@ -166,7 +169,7 @@
       <div class="hint">The answers stay blurred for now. They unlock in the finale. (Click a card to peek.)</div></div>`;
 
     if (sc.t === "round") {
-      const r = ROUNDS[sc.i], ph = PH[st.p];
+      const r = ROUNDS[sc.i], ph = curPH();
       const head = `<div class="kicker">Round ${sc.i + 1} of ${ROUNDS.length} · ${r.stage}</div>`;
       if (ph === "scene") return `<div class="screen">${head}<h2>${r.title}</h2>
         <div class="scene"><div><ul class="facts-list">${r.facts.map((f) => `<li>${f}</li>`).join("")}</ul></div>
@@ -177,10 +180,11 @@
         return `<div class="screen">${head}<h2>${strip(r.question)} <span class="votecount">${tot} vote${tot === 1 ? "" : "s"}</span><span class="votetimer" id="votetimer">${voteLeft(r)}</span></h2>${optsHTML(r, "vote")}
         <div class="hint">${isLive() ? "Voting is open on phones 📱. Cards up too! Press <kbd>→</kbd> to close voting and reveal." : "Cards up! Tap an option or press <kbd>1</kbd>–<kbd>4</kbd> to count. Press <kbd>→</kbd> to reveal."}</div></div>`;
       }
-      if (ph === "reveal") {
+      if (ph === "reveal" || ph === "demo") {
         const m = majority(r.id);
         const verdict = m === null ? "" : m === r.correct ? `<span class="verdict y">✓ The room got it</span>` : `<span class="verdict n">✗ The room picked ${m}</span>`;
-        return `<div class="screen">${head}<h2>Best fit: ${r.options[r.correct].l}${verdict}</h2>${optsHTML(r, "reveal")}
+        const demo = ph === "demo" ? `<div class="demo-overlay"><img class="bg" src="${esc(r.demo)}" alt=""><img src="${esc(r.demo)}" alt=""></div>` : "";
+        return `<div class="screen${ph === "demo" ? " static" : ""}">${head}<h2>Best fit: ${r.options[r.correct].l}${verdict}</h2><div class="optwrap">${ph === "demo" ? demo : optsHTML(r, "reveal")}</div>
         <div class="why">${r.why.map((w) => `<div class="card">${w}</div>`).join("")}</div></div>`;
       }
       return `<div class="screen"><div class="twist">${head}<span class="bolt">⚡ PLOT TWIST</span>
@@ -239,7 +243,7 @@
 
   function render(fromData) {
     const sc = cur();
-    if (sc.t === "round" && PH[st.p] === "vote" && !st.openedAt[ROUNDS[sc.i].id]) st.openedAt[ROUNDS[sc.i].id] = Date.now();
+    if (sc.t === "round" && curPH() === "vote" && !st.openedAt[ROUNDS[sc.i].id]) st.openedAt[ROUNDS[sc.i].id] = Date.now();
     $("#stage").innerHTML = view();
     if (fromData) document.querySelectorAll(".screen,.piece,.pod").forEach((e) => e.classList.add("static"));
     journey(); save(); publish(); drawQR();
@@ -257,7 +261,7 @@
   function onData() {
     clearTimeout(dataT);
     dataT = setTimeout(() => {
-      const sc = cur(), ph = PH[st.p];
+      const sc = cur(), ph = curPH();
       const relevant = sc.t === "title" || sc.t === "leaders" || (sc.t === "round" && (ph === "vote" || ph === "reveal"));
       if (relevant) render(true); else { journey(); publish(); }
     }, 120);
@@ -276,7 +280,7 @@
   }
   function restartVote() {
     const r = roundOf();
-    if (r && PH[st.p] === "vote") { st.openedAt[r.id] = Date.now(); render(true); }
+    if (r && curPH() === "vote") { st.openedAt[r.id] = Date.now(); render(true); }
   }
   setInterval(() => {
     const el = $("#votetimer"), r = roundOf();
@@ -315,7 +319,7 @@
       case "s": case "S": {
         const r = roundOf();
         if (!BE.simulate || BE.kind !== "mock") { toast("Simulation is only available in test (mock) mode"); break; }
-        if (!r || PH[st.p] !== "vote") { toast("Go to a vote step first"); break; }
+        if (!r || curPH() !== "vote") { toast("Go to a vote step first"); break; }
         BE.simulate(r.id, 40).then(() => toast("Simulated 40 phone votes")).catch((er) => toast(er.message));
         break;
       }

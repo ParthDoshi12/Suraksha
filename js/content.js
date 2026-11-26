@@ -17,11 +17,11 @@ const ROUNDS = [
     C:{l:"Build an AI agent right away",s:"Start building, figure it out as we go",c:"You end up automating the wrong process, just faster."},
     D:{l:"Task Mining on 50 desktops",s:"Record clicks and keystrokes",c:"It shows what people click, not why. The judgment calls stay hidden. Useful later, not first."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/cartographer.gif",
   why:["<b>Known vs unknown:</b> when the process isn't understood yet, you discover before you build.","Cartographer keeps a living <b>Map of Work</b> that includes the exceptions and judgment calls.","Once the map is approved, coding agents can build automations straight from it."],
   twist:{p:"Six months later Meera wants claim-turnaround trends across 2 million historical claims in the core system.",a:"Add Process Mining",d:"Cartographer maps how work runs. Process Mining measures how it performs over time from event logs. They work together."},
   pieces:[{n:"Cartographer",s:"Map of Work",L:0},{n:"Process Mining",s:"KPIs over time",L:0,tw:1}],
-  notes:"⏱ ~14 min (10:00–24:00). Jeet plays Meera and reads the quote. PD walks through the options. Suggested 2-min DEMO: Cartographer turning an SOP PDF into an AS-IS map. Pitfall to call out: Task Mining is not wrong, just not the first step."
+  notes:"⏱ ~14 min (10:00–24:00). Jeet plays Meera and reads the quote. PD walks through the options. Suggested 2-min DEMO: Cartographer turning an SOP PDF into an AS-IS map. Pitfall to call out: Task Mining is not wrong, just not the first step. On the reveal slide press → once to show the Cartographer GIF while you go through the three reasons; → again moves to the twist."
 },
 {
   id:"desktop", stage:"Desktop", title:"Priya's 2-hour morning",
