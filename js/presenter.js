@@ -232,7 +232,11 @@
     </div></div>`;
   }
 
-  function notesText() { const sc = cur(); return sc.t === "round" ? ROUNDS[sc.i].notes : NOTES[sc.t] || ""; }
+  function notesText() {
+    const sc = cur(); if (sc.t !== "round") return NOTES[sc.t] || "";
+    const r = ROUNDS[sc.i];
+    return r.notes + (r.demo && curPH() === "reveal" ? "<br><br>Press → to show the product GIF while you talk through the three reasons; → again moves to the plot twist." : "");
+  }
 
   function drawQR() {
     const el = document.getElementById("qr"); if (!el || el.dataset.done) return;
@@ -353,6 +357,7 @@
     beOk = false; render();
   }
   render();
+  ROUNDS.forEach((r) => { if (r.demo) new Image().src = r.demo; }); // warm the cache so big GIFs play smoothly on stage
   BE.init("presenter").then(() => {
     if (!BE.requiresAuth) { startLive(); toast("Test mode: open vote.html in other tabs to act as phones"); return; }
     BE.onAuth((a) => {

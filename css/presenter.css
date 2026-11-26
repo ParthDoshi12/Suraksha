@@ -80,8 +80,8 @@ p.lead{font-size:clamp(16px,1.5vw,22px);color:var(--muted);margin-top:14px;max-w
 .opt .badge{position:absolute;right:16px;top:12px;font-size:11px;font-weight:800;letter-spacing:.1em;padding:4px 8px;border-radius:6px;z-index:2}
 .opt.right .badge{background:var(--good);color:#06150d}
 .hint{font-size:12px;color:var(--muted);margin-top:12px}
-.why{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.why .card{padding:14px 16px;font-size:clamp(13px,1.1vw,16px);line-height:1.45}
+.why{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.why .card{padding:9px 14px;font-size:clamp(12px,.95vw,14px);line-height:1.4}
 .verdict{display:inline-flex;gap:10px;align-items:center;margin-left:14px;font-size:14px;padding:6px 12px;border-radius:999px;vertical-align:middle;font-weight:700}
 .verdict.y{background:rgba(48,164,108,.18);color:#8ce3b6}
 .verdict.n{background:rgba(229,72,77,.18);color:#ffaaad}

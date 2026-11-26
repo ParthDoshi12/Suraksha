@@ -21,7 +21,7 @@ const ROUNDS = [
   why:["<b>Known vs unknown:</b> when the process isn't understood yet, you discover before you build.","Cartographer keeps a living <b>Map of Work</b> that includes the exceptions and judgment calls.","Once the map is approved, coding agents can build automations straight from it."],
   twist:{p:"Six months later Meera wants claim-turnaround trends across 2 million historical claims in the core system.",a:"Add Process Mining",d:"Cartographer maps how work runs. Process Mining measures how it performs over time from event logs. They work together."},
   pieces:[{n:"Cartographer",s:"Map of Work",L:0},{n:"Process Mining",s:"KPIs over time",L:0,tw:1}],
-  notes:"⏱ ~14 min (10:00–24:00). Jeet plays Meera and reads the quote. PD walks through the options. Suggested 2-min DEMO: Cartographer turning an SOP PDF into an AS-IS map. Pitfall to call out: Task Mining is not wrong, just not the first step. On the reveal slide press → once to show the Cartographer GIF while you go through the three reasons; → again moves to the twist."
+  notes:"⏱ ~14 min (10:00–24:00). Jeet plays Meera and reads the quote. PD walks through the options. Suggested 2-min DEMO: Cartographer turning an SOP PDF into an AS-IS map. Pitfall to call out: Task Mining is not wrong, just not the first step."
 },
 {
   id:"desktop", stage:"Desktop", title:"Priya's 2-hour morning",
@@ -34,7 +34,7 @@ const ROUNDS = [
     C:{l:"An Agent Builder agent",s:"A cloud agent with tools and prompts",c:"Overkill. She would need someone to build and publish it, and it still can't see her desktop the way she does."},
     D:{l:"Excel macros",s:"The classic workaround",c:"Macros can't reach Outlook or the portal reliably, and nobody can govern them."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/delegate_stitched.gif",
   why:["<b>Who is the user?</b> One person, on their own desktop, with work that keeps changing → a desktop agent.","Delegate runs under the user's own identity and permissions, governed through Automation Ops.","Model calls go through the <b>AI Trust Layer</b>, so the same platform controls and audit trail apply."],
   twist:{p:"Now all 400 underwriters need the same report, in the same format, every day at 7 a.m.",a:"Move it to a shared, scheduled automation",d:"A personal assistant is right for one person's work that changes daily. Identical work at scale belongs in a shared, scheduled automation that runs unattended."},
   pieces:[{n:"Delegate",s:"Desktop agent",L:1},{n:"Unattended automation",s:"Same work at scale",L:1,tw:1}],
@@ -51,7 +51,7 @@ const ROUNDS = [
     C:{l:"UiPath Delegate",s:"Someone asks their desktop agent every morning",c:"A person still has to remember to ask it, which is the original problem."},
     D:{l:"A simple scheduled workflow",s:"Integration Service / API calls on a schedule",c:"Fixed rules, an API is available, high volume. That's the cheapest, most reliable and easiest option to audit."}
   },
-  correct:"D",
+  correct:"D", demo:"assets/api_workflows_v4.gif",
   why:["<b>Not everything needs an agent.</b> Fixed rules + an available API → a plain workflow.","Agents are for judgment calls, not for working out date arithmetic.","The best architects ask what the <b>least</b> intelligent option is that still solves the problem."],
   twist:{p:"Customers start replying: 'I already paid at the branch' or 'Why did my premium go up?'",a:"Send replies to an agent and keep the workflow simple",d:"The free-text replies need judgment, so an agent handles those. The reminder schedule stays a plain workflow."},
   pieces:[{n:"Renewal workflow",s:"API + schedule",L:1},{n:"Reply-handling agent",s:"Free-text judgment",L:1,tw:1}],
@@ -68,7 +68,7 @@ const ROUNDS = [
     C:{l:"Delegate on each claims handler's desktop",s:"Everyone gets their own assistant",c:"1,800 claims a day is a shared production workload, not one person's productivity."},
     D:{l:"A ChatGPT prompt pasted into a spreadsheet",s:"Quick and cheap",c:"No governance, no audit trail, no evaluations. The CISO will not be pleased."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/agent_builder.gif",
   why:["<b>Rules or judgment?</b> Unstructured documents + decisions that need reasons → an agent.","Autopilot Agent (preview) can draft the agent's prompts, tools, evaluation sets and guardrails in Studio Web.","Policy wordings are used as context, so the agent cites the clause behind each decision."],
   twist:{p:"Suraksha's digital team are pro-code developers. They live in VS Code and git and want CI/CD for everything.",a:"Build the same agent with coding agents",d:"Low-code and coded UiPath agents can now be built entirely from a coding agent such as Claude Code, Codex or Cursor, working from the terminal."},
   pieces:[{n:"Claims Triage Agent",s:"Agent Builder",L:1},{n:"Coded agents",s:"Via coding agents",L:1,tw:1}],
@@ -85,7 +85,7 @@ const ROUNDS = [
     C:{l:"Maestro Flow",s:"Developer-first orchestration for coding agents",c:"Strong tool, wrong user. This journey is owned by the business and full of human steps. Keep Flow for the twist."},
     D:{l:"Let the triage agent run everything",s:"One agent to rule them all",c:"No SLAs, no escalation path, and one prompt doing everything. Auditors will reject it."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/maestro.gif",
   why:["<b>One task or end-to-end?</b> A multi-day journey with people, agents and bots → Maestro.","The BPMN model is something business and IT can both read.","It closes the loop: the Cartographer TO-BE map → Autopilot for Maestro → a running process."],
   twist:{p:"The digital team wants a chat assistant for policy servicing, built with coding agents and shipped in 2 weeks.",a:"Maestro Flow",d:"Developer-first orchestration built for coding agents, going from prototype to production without a rebuild. Chat agents can be built as a Maestro Flow."},
   pieces:[{n:"Maestro",s:"Claims journey (BPMN)",L:2},{n:"Maestro Flow",s:"Servicing chat assistant",L:2,tw:1}],
@@ -102,7 +102,7 @@ const ROUNDS = [
     C:{l:"Turn off AI until the audit is over",s:"Safety by switching it off",c:"The backlog comes back the next day and the board mandate fails."},
     D:{l:"Trust the model vendor",s:"They said it's safe",c:"The regulator audits Suraksha, not the vendor."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/aitl.gif",
   why:["<b>Can you prove it?</b> Governance has to be enforced by the platform, not written in a PDF.","Agent design policies stop an agent from being published if it doesn't meet the rules.","Human-in-the-loop escalation handles the ₹10 lakh case."],
   twist:{p:"Group IT already has an enterprise agreement for Claude on AWS Bedrock and wants agents to use it.",a:"Bring your own model through the AI Trust Layer",d:"Connect your own model subscription through an LLM configuration in the Trust Layer. You keep your agreement and still get the platform's governance and audit."},
   pieces:[{n:"AI Trust Layer",s:"Model governance",L:3},{n:"Automation Ops policies",s:"Rules enforced before publishing",L:3},{n:"Your own model",s:"Your Bedrock agreement",L:3,tw:1}],
@@ -119,7 +119,7 @@ const ROUNDS = [
     C:{l:"Hire 10 more testers",s:"Throw people at it",c:"Expensive, slow, and it's the same problem again next quarter."},
     D:{l:"Freeze upgrades",s:"If it isn't broken…",c:"Security patches pile up. Rajesh comes back, and he's not happy."}
   },
-  correct:"B",
+  correct:"B", demo:"assets/testcloud.gif",
   why:["Automations are software, so they need testing like any software.","The 300 manual cases become test runs with a step-by-step trace.","Four QA people can now cover an entire upgrade cycle."],
   twist:{p:"The upgrade changed 4 screens that 60 test cases depend on.",a:"Self-healing test automation in Test Cloud",d:"Tests adapt to UI changes instead of failing, so the team fixes real defects instead of broken selectors."},
   pieces:[{n:"Test Cloud",s:"Delegate for Testing",L:3},{n:"Self-healing tests",s:"Handles UI changes",L:3,tw:1}],
